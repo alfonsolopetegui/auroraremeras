@@ -16,6 +16,9 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "devDependencies": {
     "@types/node": "latest",
     "@types/react": "latest",
