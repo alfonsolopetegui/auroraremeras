@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import PendingStatusContent from "../pending-status-content";
 
+export const revalidate = 0;
+
 export default function CheckoutPending() {
   return (
     <main>
