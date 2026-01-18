@@ -33,7 +33,6 @@ export default function PendingStatusContent({
         if (!response.ok) return;
 
         const data = await response.json();
-        console.log("Order status check:", data);
         setOrderStatus(data.status);
 
         if (data.shouldClearCart && !cartCleared) {
@@ -41,7 +40,6 @@ export default function PendingStatusContent({
           window.dispatchEvent(new Event("cartUpdated"));
           setCartCleared(true);
           sessionStorage.removeItem("lastOrderId");
-          console.log("✅ Cart cleared - payment approved");
           onCartCleared?.();
         }
 
@@ -51,6 +49,7 @@ export default function PendingStatusContent({
       }
     };
 
+    // Primer chequeo inmediato
     checkOrderStatus();
 
     const interval = setInterval(() => {
@@ -62,10 +61,11 @@ export default function PendingStatusContent({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [searchParams, cartCleared, onCartCleared]);
+  }, [cartCleared, onCartCleared]); // no incluimos searchParams para que no se dispare de más
 
   return (
     <>
+      {orderStatus === "pending" && <p>⏳ Pago pendiente...</p>}
       {orderStatus === "paid" && (
         <p style={{ color: "green", fontWeight: "bold" }}>✅ Pago confirmado</p>
       )}
