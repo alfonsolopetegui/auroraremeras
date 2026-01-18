@@ -14,38 +14,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
-    // Leer query params
-    const url = new URL(req.url);
-    const type = url.searchParams.get("type");
-    const dataId = url.searchParams.get("data.id");
-
-    // Leer body completo para logs
-    const body = await req.json().catch(() => ({}));
+    // Leer body del webhook
+    const body = await req.json().catch(() => ({} as any));
     console.log("🔔 WEBHOOK BODY:", JSON.stringify(body, null, 2));
-    console.log("[Webhook] Query params:", { type, dataId });
 
-    // Solo procesar pagos
-    if (type !== "payment" || !dataId) {
-      console.log("[Webhook] Skipping: not a payment notification");
-      return NextResponse.json({ received: true }, { status: 200 });
+    const paymentId = body?.data?.id;
+    if (!paymentId) {
+      return NextResponse.json({ error: "No payment id" }, { status: 200 });
     }
 
     // Consultar el pago en Mercado Pago
     const client = new MercadoPagoConfig({ accessToken });
     const payment = new Payment(client);
+    const paymentData = await payment.get({ id: String(paymentId) });
 
-    const paymentData = await payment.get({ id: dataId });
-    
-    console.log("🔔 Payment Status:", paymentData.status);
     console.log("🔔 Payment ID:", paymentData.id);
+    console.log("🔔 Payment Status:", paymentData.status);
     console.log("🔔 External reference:", paymentData.external_reference);
-    console.log("[Webhook] Full payment data:", {
-      id: paymentData.id,
-      status: paymentData.status,
-      status_detail: paymentData.status_detail,
-      external_reference: paymentData.external_reference,
-      transaction_amount: paymentData.transaction_amount,
-    });
 
     const externalReference = paymentData.external_reference;
     if (!externalReference) {
@@ -53,11 +38,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
-    // Buscar la orden
-    const order = await prisma.order.findUnique({
-      where: { id: externalReference },
-    });
-
+    const order = await prisma.order.findUnique({ where: { id: externalReference } });
     if (!order) {
       console.warn("[Webhook] Order not found:", externalReference);
       return NextResponse.json({ received: true }, { status: 200 });
@@ -69,17 +50,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true }, { status: 200 });
     }
 
-    // Mapear status de Mercado Pago a nuestro sistema
+    // Mapear status
     let newStatus = order.status;
-    if (paymentData.status === "approved") {
-      newStatus = "paid";
-    } else if (paymentData.status === "rejected") {
-      newStatus = "rejected";
-    } else if (paymentData.status === "pending" || paymentData.status === "in_process") {
-      newStatus = "pending";
-    }
+    if (paymentData.status === "approved") newStatus = "paid";
+    else if (paymentData.status === "rejected") newStatus = "rejected";
+    else if (paymentData.status === "pending" || paymentData.status === "in_process") newStatus = "pending";
 
-    // Actualizar orden
     await prisma.order.update({
       where: { id: order.id },
       data: {
@@ -91,16 +67,14 @@ export async function POST(req: Request) {
     console.log("✅ [Webhook] Order updated:", {
       orderId: order.id,
       oldStatus: order.status,
-      newStatus: newStatus,
+      newStatus,
       paymentId: paymentData.id,
       approved: paymentData.status === "approved",
     });
 
-    // Siempre responder 200
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err: any) {
     console.error("[Webhook] Error:", err);
-    // SIEMPRE responder 200 aunque haya error
     return NextResponse.json({ received: true }, { status: 200 });
   }
 }
