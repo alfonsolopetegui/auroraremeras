@@ -1,4 +1,5 @@
 import "../styles/globals.css";
+import "../styles/admin.css";
 import Header from "./components/Header";
 
 export const metadata = {

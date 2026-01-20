@@ -1,40 +1,15 @@
-import Link from "next/link";
+import Link from "next/link"
+import { PrismaClient } from "@prisma/client"
 
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  imageUrl: string;
-};
+const prisma = new PrismaClient()
 
-const products: Product[] = [
-  {
-    id: "1",
-    name: "Remera Clásica Blanca",
-    price: 29.99,
-    imageUrl: "/remerablanca.jpg",
-  },
-  {
-    id: "2",
-    name: "Remera Negra Premium",
-    price: 34.99,
-    imageUrl: "/remeranegra.jpg",
-  },
-  {
-    id: "3",
-    name: "Remera Deportiva Roja",
-    price: 31.99,
-    imageUrl: "/remeraroja.jpg",
-  },
-  {
-    id: "4",
-    name: "Remera Salmón Casual",
-    price: 36.99,
-    imageUrl: "/remerasalmon.jpg",
-  },
-];
+export default async function Home() {
+  const products = await prisma.product.findMany({
+    where: { active: true },
+    include: { variants: true },
+    orderBy: { createdAt: "desc" },
+  })
 
-export default function Home() {
   return (
     <main className="home-container">
       <h1>Remeras</h1>
@@ -47,16 +22,22 @@ export default function Home() {
             href={`/product/${product.id}`}
             className="product-card"
           >
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="product-image"
-            />
+            {product.imageUrl && (
+              <img
+                src={product.imageUrl}
+                alt={product.name}
+                className="product-image"
+              />
+            )}
             <h2 className="product-name">{product.name}</h2>
             <p className="product-price">${product.price.toFixed(2)}</p>
           </Link>
         ))}
       </div>
+
+      {products.length === 0 && (
+        <p className="no-products">No hay productos disponibles.</p>
+      )}
     </main>
-  );
+  )
 }
