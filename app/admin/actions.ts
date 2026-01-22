@@ -118,10 +118,10 @@ export async function toggleProductActiveAction(id: string) {
   if (!product) return
 
   await prisma.product.update({
-  
-  revalidatePath('/admin/products')
-  revalidatePath('/')
     where: { id },
     data: { active: !product.active },
   })
+
+  revalidatePath('/admin/products')
+  revalidatePath('/')
 }
