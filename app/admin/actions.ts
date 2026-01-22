@@ -1,6 +1,7 @@
 'use server'
 
 import { PrismaClient } from '@prisma/client'
+import { revalidatePath } from 'next/cache'
 import { uploadProductImage, deleteProductImage } from '@/lib/blob'
 
 const prisma = new PrismaClient()
@@ -70,6 +71,9 @@ export async function createProductAction(data: any) {
       },
     },
   })
+  
+  revalidatePath('/admin/products')
+  revalidatePath('/')
 }
 
 export async function updateProductAction(id: string, data: any) {
@@ -104,6 +108,9 @@ export async function updateProductAction(id: string, data: any) {
       },
     },
   })
+  
+  revalidatePath('/admin/products')
+  revalidatePath('/')
 }
 
 export async function toggleProductActiveAction(id: string) {
@@ -111,6 +118,9 @@ export async function toggleProductActiveAction(id: string) {
   if (!product) return
 
   await prisma.product.update({
+  
+  revalidatePath('/admin/products')
+  revalidatePath('/')
     where: { id },
     data: { active: !product.active },
   })
