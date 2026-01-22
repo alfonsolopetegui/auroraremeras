@@ -1,15 +1,13 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import { ProductForm } from '../../../components/ProductForm'
 import { updateProductAction } from '../../../actions'
 
+// Server component: provides server action to the client form
 export function EditProductForm({ product }: { product: any }) {
-  const router = useRouter()
-
   async function handleSave(data: any) {
+    'use server'
     await updateProductAction(product.id, data)
-    router.push('/admin/products')
+    redirect('/admin/products')
   }
 
   return <ProductForm product={product} onSave={handleSave} />

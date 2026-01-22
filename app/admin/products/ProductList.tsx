@@ -2,17 +2,17 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { toggleProductActiveAction } from '../actions'
 
 interface ProductListProps {
   products: any[]
+  onToggle: (id: string) => Promise<void>
 }
 
-export function ProductList({ products }: ProductListProps) {
+export function ProductList({ products, onToggle }: ProductListProps) {
   const router = useRouter()
 
   async function handleToggleActive(id: string) {
-    await toggleProductActiveAction(id)
+    await onToggle(id)
     router.refresh()
   }
 
