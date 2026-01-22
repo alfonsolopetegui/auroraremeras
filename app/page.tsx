@@ -3,6 +3,9 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
+// No cache: always fetch fresh products
+export const revalidate = 0
+
 export default async function Home() {
   const products = await prisma.product.findMany({
     where: { active: true },

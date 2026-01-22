@@ -4,6 +4,9 @@ import { ProductDetailClient } from "./product-detail-client"
 
 const prisma = new PrismaClient()
 
+// No cache: always serve the latest product detail
+export const revalidate = 0
+
 interface ProductDetailProps {
   params: {
     id: string
